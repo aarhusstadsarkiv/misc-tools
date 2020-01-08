@@ -5,9 +5,11 @@
 # -----------------------------------------------------------------------------
 # Imports
 # -----------------------------------------------------------------------------
+import re
 from pathlib import Path
 from typing import List, Any
 from PIL import Image
+from natsort import natsorted
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -43,7 +45,10 @@ def images2pdf(image_path: Path, outfile: Path) -> None:
     """
     out_pdf: Path = outfile.with_suffix(".pdf")
     images: List[Any] = []
-    files: List[Path] = [f for f in image_path.rglob("*") if f.is_file()]
+    files_str: List[str] = [
+        str(f) for f in image_path.rglob("*") if f.is_file()
+    ]
+    files = [Path(file) for file in natsorted(files_str)]
     for file in files:
         try:
             im = Image.open(file)
@@ -68,4 +73,9 @@ def images2pdf(image_path: Path, outfile: Path) -> None:
         raise ImageConvertError(e)
 
 
-images2pdf(Path(r"C:\data\test_img\empty"), Path(r"C:\data\test_img\test.pdf"))
+images2pdf(
+    Path(
+        r"M:\Borgerservice-Biblioteker\Stadsarkivet\Projekter\RETRO\Materiale fra andre arkiver\Næstved Kommune\Aversi Sogneråd forhandlingsprotokol 1856-1891"
+    ),
+    Path(r"C:\data\test_img\test.pdf"),
+)
