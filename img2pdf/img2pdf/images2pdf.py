@@ -5,10 +5,13 @@
 # -----------------------------------------------------------------------------
 # Imports
 # -----------------------------------------------------------------------------
+import sys
 from pathlib import Path
 from typing import List, Any
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from natsort import natsorted
+from gooey import Gooey, GooeyParser
+from __init__ import __version__
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -24,36 +27,42 @@ class ImageConvertError(Exception):
 # -----------------------------------------------------------------------------
 
 
-def images2pdf(image_path: Path, outfile: Path) -> None:
-    """Description
+def images2pdf(image_path: Path, out_file: Path) -> None:
+    """Converts images from the input path to a PDF file.
 
     Parameters
     ----------
-    param : type
-        desc
-
-    Returns
-    -------
-    return : type
-        desc
+    image_path : pathlib.Path
+        Directory where images for conversion reside.
+    out_file: Path
+        File to write images to.
 
     Raises
     ------
-    BadError
+    ImageConvertError
+        Raised when errors in conversion occur. Errors from PIL are caught
+        and re-raised with this error. If no images are loaded, this error
+        is raised as well.
 
     """
-    out_pdf: Path = outfile.with_suffix(".pdf")
+
+    out_pdf: Path = out_file.with_suffix(".pdf")
     images: List[Any] = []
     files_str: List[str] = [
         str(f) for f in image_path.rglob("*") if f.is_file()
     ]
-    files = [Path(file) for file in natsorted(files_str)]
+    files: List[Path] = [Path(file) for file in natsorted(files_str)]
+
     for file in files:
         try:
-            im = Image.open(file)
-        except Exception:
-            pass
+            im: Any = Image.open(file)
+        except UnidentifiedImageError:
+            print(f"Failed to open {file} as an image.")
+        except Exception as e:
+            raise ImageConvertError(e)
         else:
+            if im.mode == "RGBA":
+                im = im.convert("RGB")
             images.append(im)
 
     if not images:
@@ -72,9 +81,48 @@ def images2pdf(image_path: Path, outfile: Path) -> None:
         raise ImageConvertError(e)
 
 
-images2pdf(
-    Path(
-        r"M:\Borgerservice-Biblioteker\Stadsarkivet\Projekter\RETRO\Materiale fra andre arkiver\Næstved Kommune\Aversi Sogneråd forhandlingsprotokol 1856-1891"
-    ),
-    Path(r"C:\data\test_img\test.pdf"),
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+
+@Gooey(
+    program_name=f"Images to PDF version {__version__}",
+    default_size=(800, 550),
+    show_restart_button=False,
+    show_failure_modal=False,
+    show_success_modal=False,
 )
+def main() -> None:
+    """Main functionality. Uses Gooey for argparsing so we get a nice GUI!."""
+
+    # Argparsing
+    parser = GooeyParser(description="Convert images to a single PDF file.")
+    input_group = parser.add_argument_group("Input")
+    output_group = parser.add_argument_group("Output")
+    input_group.add_argument(
+        "image_path",
+        metavar="Image folder",
+        help="Folder with images that should be written to a PDF file.",
+        widget="DirChooser",
+        type=Path,
+    )
+    output_group.add_argument(
+        "outfile",
+        metavar="Output file",
+        help="PDF file to output images to.",
+        widget="FileSaver",
+    )
+    args = parser.parse_args()
+
+    # Run conversion
+    try:
+        images2pdf(Path(args.image_path), Path(args.outfile))
+    except ImageConvertError as e:
+        sys.exit(e)
+    else:
+        print(f"Successfully wrote images to {args.outfile}! :)")
+
+
+if __name__ == "__main__":
+    main()
