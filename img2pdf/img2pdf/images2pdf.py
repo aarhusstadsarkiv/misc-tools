@@ -58,11 +58,11 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
         try:
             im: Any = Image.open(file)
         except UnidentifiedImageError:
-            print(f"Failed to open {file} as an image.")
+            print(f"Failed to open {file} as an image.", flush=True)
         except Exception as e:
             raise ImageConvertError(e)
         else:
-            print(f"Loading {file}")
+            print(f"Loading {file}", flush=True)
             im.load()
 
             # Cannot save alpha channel to PDF
@@ -96,7 +96,7 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
             "No images loaded! Please double check your path."
         )
     try:
-        print(f"Saving images...")
+        print(f"Writing images to {out_pdf}", flush=True)
         images[0].save(
             out_pdf,
             "PDF",
@@ -121,7 +121,7 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
     show_success_modal=False,
 )
 def main() -> None:
-    """Main functionality. Uses Gooey for argparsing so we get a nice GUI!."""
+    """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
 
     # Argparsing
     parser = GooeyParser(description="Convert images to a single PDF file.")
@@ -148,7 +148,7 @@ def main() -> None:
     except ImageConvertError as e:
         sys.exit(e)
     else:
-        print(f"Successfully wrote images to {args.outfile}! :)")
+        print(f"Successfully wrote images to {args.outfile}! :)", flush=True)
 
 
 if __name__ == "__main__":
