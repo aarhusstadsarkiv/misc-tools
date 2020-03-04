@@ -2,7 +2,7 @@
 
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 # -----------------------------------------------------------------------------
 # Imports
@@ -13,6 +13,13 @@ from typing import List, Any, Dict, Optional
 from PIL import Image, ExifTags, UnidentifiedImageError
 from natsort import natsorted
 from gooey import Gooey, GooeyParser
+
+import codecs
+
+if sys.stdout.encoding != "UTF-8":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+if sys.stderr.encoding != "UTF-8":
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -139,8 +146,10 @@ def main() -> None:
         metavar="Output file",
         help="PDF file to output images to.",
         widget="FileSaver",
+        type=Path,
     )
     args = parser.parse_args()
+    print(args.image_path, args.outfile, flush=True)
 
     # Run conversion
     try:
