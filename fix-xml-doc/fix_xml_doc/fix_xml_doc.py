@@ -1,5 +1,6 @@
 import time
 import json
+import re
 import pyautogui
 import logging
 from typing import Any, List
@@ -75,6 +76,24 @@ def get_doc_files(data_file: Path) -> List[Path]:
     return borked_files
 
 
+def get_duplicate_files(data_file: Path) -> List[Path]:
+    data = json_load(data_file)
+    several_files = [
+        Path(file)
+        for file in data.get("metadata", {}).get("several_files", [])
+    ]
+    files = data.get("files", [])
+    return [
+        Path(file.get("path"))
+        for file in files
+        if Path(file.get("path")).parent in several_files
+        and (
+            Path(file.get("path")).suffix.lower() == ".doc"
+            or re.match(r"^~\$", Path(file.get("path")).name)
+        )
+    ]
+
+
 def main() -> None:
     log = log_setup(
         log_name="fix_doc_files",
@@ -82,14 +101,25 @@ def main() -> None:
         / "logs",
         mode="w",
     )
-    borked_files = get_doc_files(
+    dup_files = get_duplicate_files(
         Path(
             "D:\\data\\batches\\batch_1\\org_files"
             "\\_digiarch\\.data\\data.json"
         )
     )
-    for file in tqdm(borked_files, desc="Fixing files"):
-        convert_doc_file(file, log)
+    for file in dup_files:
+        try:
+            file.unlink()
+        except FileNotFoundError:
+            pass
+    # borked_files = get_doc_files(
+    #     Path(
+    #         "D:\\data\\batches\\batch_1\\org_files"
+    #         "\\_digiarch\\.data\\data.json"
+    #     )
+    # )
+    # for file in tqdm(borked_files, desc="Fixing files"):
+    #     convert_doc_file(file, log)
 
 
 if __name__ == "__main__":
