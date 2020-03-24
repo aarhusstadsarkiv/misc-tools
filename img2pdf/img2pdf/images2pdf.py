@@ -2,16 +2,24 @@
 
 """
 
+__version__ = "1.1.1"
+
 # -----------------------------------------------------------------------------
 # Imports
 # -----------------------------------------------------------------------------
 import sys
 from pathlib import Path
-from typing import List, Any
-from PIL import Image, UnidentifiedImageError
+from typing import List, Any, Dict, Optional
+from PIL import Image, ExifTags, UnidentifiedImageError
 from natsort import natsorted
 from gooey import Gooey, GooeyParser
-from __init__ import __version__
+
+import codecs
+
+if sys.stdout.encoding != "UTF-8":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+if sys.stderr.encoding != "UTF-8":
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -57,12 +65,37 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
         try:
             im: Any = Image.open(file)
         except UnidentifiedImageError:
-            print(f"Failed to open {file} as an image.")
+            print(f"Failed to open {file} as an image.", flush=True)
         except Exception as e:
             raise ImageConvertError(e)
         else:
+            print(f"Loading {file}", flush=True)
+            im.load()
+
+            # Cannot save alpha channel to PDF
             if im.mode == "RGBA":
                 im = im.convert("RGB")
+
+            # JPG image might be rotated
+            if hasattr(im, "_getexif"):  # only present in JPGs
+                # Find the orientation exif tag.
+                for tag, tag_value in ExifTags.TAGS.items():
+                    if tag_value == "Orientation":
+                        orientation_key: int = tag
+                        break
+
+                # If exif data is present, rotate image according to
+                # orientation value.
+                if im.getexif() is not None:
+                    exif: Dict[Any, Any] = dict(im.getexif().items())
+                    orientation: Optional[int] = exif.get(orientation_key)
+                    if orientation == 3:
+                        im = im.rotate(180)
+                    elif orientation == 6:
+                        im = im.rotate(270)
+                    elif orientation == 8:
+                        im = im.rotate(90)
+
             images.append(im)
 
     if not images:
@@ -70,6 +103,7 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
             "No images loaded! Please double check your path."
         )
     try:
+        print(f"Writing images to {out_pdf}", flush=True)
         images[0].save(
             out_pdf,
             "PDF",
@@ -94,7 +128,7 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
     show_success_modal=False,
 )
 def main() -> None:
-    """Main functionality. Uses Gooey for argparsing so we get a nice GUI!."""
+    """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
 
     # Argparsing
     parser = GooeyParser(description="Convert images to a single PDF file.")
@@ -112,8 +146,10 @@ def main() -> None:
         metavar="Output file",
         help="PDF file to output images to.",
         widget="FileSaver",
+        type=Path,
     )
     args = parser.parse_args()
+    print(args.image_path, args.outfile, flush=True)
 
     # Run conversion
     try:
@@ -121,7 +157,7 @@ def main() -> None:
     except ImageConvertError as e:
         sys.exit(e)
     else:
-        print(f"Successfully wrote images to {args.outfile}! :)")
+        print(f"Successfully wrote images to {args.outfile}! :)", flush=True)
 
 
 if __name__ == "__main__":
