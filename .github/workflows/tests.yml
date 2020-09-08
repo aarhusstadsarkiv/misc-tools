@@ -1,0 +1,69 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  check:
+    name: Check linting & types
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Set up poetry
+        uses: dschep/install-poetry-action@v1.3
+      - name: Set up cache
+        uses: actions/cache@v1
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install
+      - name: Run flake8, black, and mypy
+        run: |
+          poetry run flake8
+          poetry run black --check .
+          poetry run mypy .
+
+
+  # test:
+  #   name: Run tests & get coverage
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout 
+  #       uses: actions/checkout@v1
+  #     - name: Set up Python 3.8
+  #       uses: actions/setup-python@v1
+  #       with:
+  #         python-version: 3.8
+  #     - name: Set up poetry
+  #       uses: dschep/install-poetry-action@v1.3
+  #     - name: Set up cache
+  #       uses: actions/cache@v1
+  #       with:
+  #         path: .venv
+  #         key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-venv-
+  #     - name: Install dependencies
+  #       run: |
+  #         poetry config virtualenvs.create true
+  #         poetry config virtualenvs.in-project true
+  #         poetry install
+      # - name: Test and generate coverage report
+      #   run: |
+      #     source $HOME/.poetry/env
+      #     poetry run pytest --cov=project_name --cov-report=xml
+      # - name: Upload to codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     fail_ci_if_error: true
