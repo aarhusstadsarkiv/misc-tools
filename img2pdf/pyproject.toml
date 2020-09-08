@@ -5,7 +5,6 @@ description = ""
 authors = ["Nina Jensen <jnik@aarhus.dk>"]
 maintainers = ["Aarhus Stadsarkiv <stadsarkiv@aarhus.dk>"]
 license = "GPL-3.0"
-readme = "README.md"
 homepage = "https://www.aarhusstadsarkiv.dk/"
 
 [tool.poetry.dependencies]
