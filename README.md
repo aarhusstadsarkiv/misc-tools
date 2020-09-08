@@ -8,6 +8,6 @@ Use `pyinstaller` as follows:
 - On Windows, remember to use the "windowed" option with `-w`.
 - To compile to one file, use the `-F` option.
 - In summary: 
-    ```pwsh
-    poetry run pyinstaller -F -w <path_to_script.py>
+    ```
+    poetry run pyinstaller -F -w path_to_script.py
     ``` 
