@@ -6,7 +6,8 @@ import logging
 from typing import Any, List
 from pathlib import Path
 import subprocess
-from tqdm import tqdm
+
+# from tqdm import tqdm
 
 pyautogui.PAUSE = 0.4
 pyautogui.FAILSAFE = False
@@ -95,12 +96,12 @@ def get_duplicate_files(data_file: Path) -> List[Path]:
 
 
 def main() -> None:
-    log = log_setup(
-        log_name="fix_doc_files",
-        log_path=Path("D:\\data\\batches\\batch_1\\org_files\\_digiarch")
-        / "logs",
-        mode="w",
-    )
+    # log = log_setup(
+    #     log_name="fix_doc_files",
+    #     log_path=Path("D:\\data\\batches\\batch_1\\org_files\\_digiarch")
+    #     / "logs",
+    #     mode="w",
+    # )
     dup_files = get_duplicate_files(
         Path(
             "D:\\data\\batches\\batch_1\\org_files"
