@@ -2,7 +2,7 @@
 
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 # -----------------------------------------------------------------------------
@@ -96,7 +96,6 @@ def images2jpg(
         str(f) for f in image_path.rglob("*") if f.is_file()
     ]
     files: List[Path] = [Path(file) for file in natsorted(files_str)]
-
     for index, file in enumerate(files):
         print(f"{index+1}/{len(files)}", flush=True)
         try:
@@ -109,7 +108,7 @@ def images2jpg(
             shutil.copytree(
                 image_path, out_dir, ignore=_cptree_ignore, dirs_exist_ok=True
             )
-            image_out = out_path(file, out_dir, image_path.stem)
+            image_out = out_path(file, out_dir, image_path.parts[-1])
             im.load()
 
             # Resize max width/height is smaller than image width/height
