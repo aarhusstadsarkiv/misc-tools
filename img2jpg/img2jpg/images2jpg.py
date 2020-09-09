@@ -93,7 +93,8 @@ def images2jpg(
     ]
     files: List[Path] = [Path(file) for file in natsorted(files_str)]
 
-    for file in files:
+    for index, file in enumerate(files):
+        print(f"{index+1}/{len(files)}", flush=True)
         try:
             im: Any = Image.open(file)
         except UnidentifiedImageError:
@@ -101,7 +102,6 @@ def images2jpg(
         except Exception as e:
             raise ImageConvertError(e)
         else:
-            print(f"Loading {file}", flush=True)
             shutil.copytree(
                 image_path, out_dir, ignore=_cptree_ignore, dirs_exist_ok=True
             )
@@ -156,6 +156,9 @@ def images2jpg(
     show_restart_button=False,
     show_failure_modal=False,
     show_success_modal=False,
+    progress_regex=r"(\d+)/(\d+)$",
+    progress_expr="x[0] / x[1] * 100",
+    hide_progress_msg=True,
 )
 def main() -> None:
     """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
@@ -210,7 +213,6 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-    print(args, flush=True)
 
     # Run conversion
     try:
