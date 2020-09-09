@@ -7,19 +7,27 @@ __version__ = "1.1.1"
 # -----------------------------------------------------------------------------
 # Imports
 # -----------------------------------------------------------------------------
-import sys
-from pathlib import Path
-from typing import List, Any, Dict, Optional
-from PIL import Image, ExifTags, UnidentifiedImageError
-from natsort import natsorted
-from gooey import Gooey, GooeyParser
 
 import codecs
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from PIL import ExifTags, Image, UnidentifiedImageError
+
+from gooey import Gooey, GooeyParser
+from natsort import natsorted
+
+# -----------------------------------------------------------------------------
+# UTF-8
+# -----------------------------------------------------------------------------
+
+utf8_codec = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
 if sys.stdout.encoding != "UTF-8":
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stdout = utf8_codec  # type: ignore
 if sys.stderr.encoding != "UTF-8":
-    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
+    sys.stderr = utf8_codec  # type: ignore
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -61,7 +69,8 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
     ]
     files: List[Path] = [Path(file) for file in natsorted(files_str)]
 
-    for file in files:
+    for index, file in enumerate(files):
+        print(f"{index+1}/{len(files)}", flush=True)
         try:
             im: Any = Image.open(file)
         except UnidentifiedImageError:
@@ -69,7 +78,6 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
         except Exception as e:
             raise ImageConvertError(e)
         else:
-            print(f"Loading {file}", flush=True)
             im.load()
 
             # Cannot save alpha channel to PDF
@@ -126,6 +134,9 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
     show_restart_button=False,
     show_failure_modal=False,
     show_success_modal=False,
+    progress_regex=r"(\d+)/(\d+)$",
+    progress_expr="x[0] / x[1] * 100",
+    hide_progress_msg=True,
 )
 def main() -> None:
     """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
