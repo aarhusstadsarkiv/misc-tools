@@ -20,6 +20,10 @@ from PIL import ExifTags, Image, UnidentifiedImageError
 from gooey import Gooey, GooeyParser
 from natsort import natsorted
 
+# -----------------------------------------------------------------------------
+# UTF-8
+# -----------------------------------------------------------------------------
+
 utf8_codec = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
 if sys.stdout.encoding != "UTF-8":
