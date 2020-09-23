@@ -10,6 +10,7 @@ __version__ = "1.2.0"
 # -----------------------------------------------------------------------------
 
 import codecs
+import multiprocessing
 import shutil
 import sys
 from logging import Logger
@@ -203,7 +204,6 @@ def images2jpg(
 )
 def main() -> None:
     """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
-
     # Argparsing
     parser = GooeyParser(description="Convert images to JPEG files.")
     input_group = parser.add_argument_group("Input")
@@ -271,4 +271,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
