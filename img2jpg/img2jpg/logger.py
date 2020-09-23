@@ -2,7 +2,6 @@
 # Imports
 # -----------------------------------------------------------------------------
 
-import multiprocessing
 import logging
 from pathlib import Path
 

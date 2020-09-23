@@ -14,7 +14,6 @@ import shutil
 import sys
 from logging import Logger
 from multiprocessing import Pool
-from multiprocessing_logging import install_mp_handler
 from pathlib import Path
 from functools import partial
 from typing import Any, Dict, List, Optional, Set, Callable
@@ -22,7 +21,6 @@ from typing import Any, Dict, List, Optional, Set, Callable
 from PIL import ExifTags, Image, UnidentifiedImageError
 
 from gooey import Gooey, GooeyParser
-from natsort import natsorted
 
 from img2jpg.logger import log_setup
 
@@ -161,7 +159,7 @@ def images2jpg(
     get_out_path = partial(
         out_path, out_dir=out_dir, break_target=image_path.parts[-1]
     )
-    log_path = out_dir / f"_img2jpg.log"
+    log_path = out_dir / "_img2jpg.log"
     img_log: Logger = log_setup(log_path)
     print(f"Logging to {log_path}", flush=True)
     mp_image_convert = partial(
