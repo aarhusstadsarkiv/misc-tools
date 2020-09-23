@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "img2jpg"
-version = "1.1.0"
+version = "1.2.0"
 description = ""
 authors = ["Nina Jensen <jnik@aarhus.dk>"]
 maintainers = ["Aarhus Stadsarkiv <stadsarkiv@aarhus.dk>"]
@@ -13,6 +13,7 @@ pillow = "^7.0.0"
 natsort = "^6.2.0"
 gooey = "^1.0.3"
 pyinstaller = "^4.0"
+multiprocessing-logging = "^0.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0"

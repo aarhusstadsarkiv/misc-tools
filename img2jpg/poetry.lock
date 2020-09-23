@@ -168,6 +168,14 @@ python-versions = ">=3.5"
 version = "8.5.0"
 
 [[package]]
+category = "main"
+description = "Logger for multiprocessing applications"
+name = "multiprocessing-logging"
+optional = false
+python-versions = "*"
+version = "0.3.1"
+
+[[package]]
 category = "dev"
 description = "Optional static typing for Python"
 name = "mypy"
@@ -438,7 +446,7 @@ python = ">=3.0"
 version = "*"
 
 [metadata]
-content-hash = "abebb480d52c0421b4b9362ac3d43bb8570784baae64fa278209eb1ab5d56ecb"
+content-hash = "49a59034497b94a5c5d1dc9ce059cd3d728746b5e5c6adf1de22b9d8e6b4fcf3"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -536,6 +544,9 @@ mccabe = [
 more-itertools = [
     {file = "more-itertools-8.5.0.tar.gz", hash = "sha256:6f83822ae94818eae2612063a5101a7311e68ae8002005b5e05f03fd74a86a20"},
     {file = "more_itertools-8.5.0-py3-none-any.whl", hash = "sha256:9b30f12df9393f0d28af9210ff8efe48d10c94f73e5daf886f10c4b0b0b4f03c"},
+]
+multiprocessing-logging = [
+    {file = "multiprocessing_logging-0.3.1-py2.py3-none-any.whl", hash = "sha256:9d3eb0f1f859b7ba6250a029726f77a7701999deda939595122d8748751de2e3"},
 ]
 mypy = [
     {file = "mypy-0.782-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:2c6cde8aa3426c1682d35190b59b71f661237d74b053822ea3d748e2c9578a7c"},

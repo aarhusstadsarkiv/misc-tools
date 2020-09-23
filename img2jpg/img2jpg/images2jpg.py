@@ -2,7 +2,7 @@
 
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 
 # -----------------------------------------------------------------------------
@@ -12,13 +12,19 @@ __version__ = "1.1.0"
 import codecs
 import shutil
 import sys
+from logging import Logger
+from multiprocessing import Pool
+from multiprocessing_logging import install_mp_handler
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from functools import partial
+from typing import Any, Dict, List, Optional, Set, Callable
 
 from PIL import ExifTags, Image, UnidentifiedImageError
 
 from gooey import Gooey, GooeyParser
 from natsort import natsorted
+
+from img2jpg.logger import log_setup
 
 # -----------------------------------------------------------------------------
 # UTF-8
@@ -62,6 +68,63 @@ def out_path(file_path: Path, out_dir: Path, break_target: str) -> Path:
     return new_path
 
 
+def convert_image(
+    img_file: Path,
+    get_out_path: Callable[[Path], Path],
+    quality: int,
+    max_width: int,
+    max_height: int,
+) -> str:
+
+    try:
+        im: Any = Image.open(img_file)
+    except UnidentifiedImageError:
+        error = f"Failed to open {img_file} as an image."
+    except Exception as e:
+        error = f"Error encountered while opening file {img_file}: {e}"
+    else:
+        image_out = get_out_path(img_file)
+        im.load()
+        error = ""
+        # Resize max width/height is smaller than image width/height
+        width, height = im.size
+        scaling = 1
+        if max_width and max_width / width < 1:
+            scaling = max_width / width
+        if max_height and max_height / height < 1:
+            scaling = max_height / height
+        if scaling != 1:
+            new_size = (int(scaling * width), int(scaling * height))
+            im = im.resize(new_size)
+
+        # JPG image might be rotated
+        if hasattr(im, "_getexif"):  # only present in JPGs
+            # Find the orientation exif tag.
+            orientation_key: Optional[int] = None
+            for tag, tag_value in ExifTags.TAGS.items():
+                if tag_value == "Orientation":
+                    orientation_key = tag
+                    break
+
+            # If exif data is present, rotate image according to
+            # orientation value.
+            if im.getexif() is not None:
+                exif: Dict[Any, Any] = dict(im.getexif().items())
+                orientation: Optional[int] = exif.get(orientation_key)
+                if orientation == 3:
+                    im = im.rotate(180)
+                elif orientation == 6:
+                    im = im.rotate(270)
+                elif orientation == 8:
+                    im = im.rotate(90)
+
+        try:
+            im.save(image_out, "JPEG", quality=quality or 75)
+        except Exception as e:
+            error = f"Error encountered while saving file {img_file}: {e}"
+    return error
+
+
 def images2jpg(
     image_path: Path,
     out_dir: Path,
@@ -91,61 +154,41 @@ def images2jpg(
 
     """
 
-    # out_pdf: Path = out_file.with_suffix(".pdf")
-    files_str: List[str] = [
-        str(f) for f in image_path.rglob("*") if f.is_file()
-    ]
-    files: List[Path] = [Path(file) for file in natsorted(files_str)]
-    for index, file in enumerate(files):
-        print(f"{index+1}/{len(files)}", flush=True)
-        try:
-            im: Any = Image.open(file)
-        except UnidentifiedImageError:
-            print(f"Failed to open {file} as an image.", flush=True)
-        except Exception as e:
-            raise ImageConvertError(e)
-        else:
-            shutil.copytree(
-                image_path, out_dir, ignore=_cptree_ignore, dirs_exist_ok=True
-            )
-            image_out = out_path(file, out_dir, image_path.parts[-1])
-            im.load()
+    files: List[Path] = [f for f in image_path.rglob("*") if f.is_file()]
+    shutil.copytree(
+        image_path, out_dir, ignore=_cptree_ignore, dirs_exist_ok=True
+    )
+    get_out_path = partial(
+        out_path, out_dir=out_dir, break_target=image_path.parts[-1]
+    )
+    log_path = out_dir / f"_img2jpg.log"
+    img_log: Logger = log_setup(log_path)
+    print(f"Logging to {log_path}", flush=True)
+    mp_image_convert = partial(
+        convert_image,
+        get_out_path=get_out_path,
+        quality=quality,
+        max_width=max_width,
+        max_height=max_height,
+    )
+    pool = Pool()
+    try:
+        errors = list(pool.imap_unordered(mp_image_convert, files))
+    except (KeyboardInterrupt, Exception):
+        pool.terminate()
+        raise
+    else:
+        for error in errors:
+            if error:
+                img_log.error(error)
+        img_log.info("Finished job")
+    finally:
+        pool.close()
+        pool.join()
 
-            # Resize max width/height is smaller than image width/height
-            width, height = im.size
-            scaling = 1
-            if max_width and max_width / width < 1:
-                scaling = max_width / width
-            if max_height and max_height / height < 1:
-                scaling = max_height / height
-            if scaling != 1:
-                new_size = (int(scaling * width), int(scaling * height))
-                im = im.resize(new_size)
-
-            # JPG image might be rotated
-            if hasattr(im, "_getexif"):  # only present in JPGs
-                # Find the orientation exif tag.
-                for tag, tag_value in ExifTags.TAGS.items():
-                    if tag_value == "Orientation":
-                        orientation_key: int = tag
-                        break
-
-                # If exif data is present, rotate image according to
-                # orientation value.
-                if im.getexif() is not None:
-                    exif: Dict[Any, Any] = dict(im.getexif().items())
-                    orientation: Optional[int] = exif.get(orientation_key)
-                    if orientation == 3:
-                        im = im.rotate(180)
-                    elif orientation == 6:
-                        im = im.rotate(270)
-                    elif orientation == 8:
-                        im = im.rotate(90)
-
-            try:
-                im.save(image_out, "JPEG", quality=quality or 75)
-            except Exception as error:
-                raise ImageConvertError(error)
+    # for index, file in enumerate(files):
+    #     print(f"{index+1}/{len(files)}", flush=True)
+    #     mp_image_convert(file)
 
 
 # -----------------------------------------------------------------------------
@@ -159,9 +202,6 @@ def images2jpg(
     show_restart_button=False,
     show_failure_modal=False,
     show_success_modal=False,
-    progress_regex=r"(\d+)/(\d+)$",
-    progress_expr="x[0] / x[1] * 100",
-    hide_progress_msg=True,
 )
 def main() -> None:
     """Main functionality. Uses Gooey for argparsing so we get a nice GUI!"""
