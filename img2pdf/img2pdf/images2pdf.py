@@ -16,10 +16,13 @@ from gooey import Gooey, GooeyParser
 
 import codecs
 
+
+utf8_stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+utf8_stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 if sys.stdout.encoding != "UTF-8":
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stdout = utf8_stdout  # type: ignore
 if sys.stderr.encoding != "UTF-8":
-    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
+    sys.stderr = utf8_stderr  # type: ignore
 
 # -----------------------------------------------------------------------------
 # Classes
