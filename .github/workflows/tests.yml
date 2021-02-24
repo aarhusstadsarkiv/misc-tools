@@ -31,10 +31,8 @@ jobs:
         run: |
           poetry run flake8
           poetry run black --check .
-          poetry run mypy fix-xml-doc/
           poetry run mypy img2jpg/
           poetry run mypy img2pdf/
-          poetry run mypy lwp-bytes/
 
 
   # test:
