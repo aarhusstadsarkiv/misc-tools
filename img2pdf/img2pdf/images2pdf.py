@@ -2,7 +2,7 @@
 
 """
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 # -----------------------------------------------------------------------------
 # Imports
@@ -10,19 +10,23 @@ __version__ = "1.1.1"
 import sys
 from pathlib import Path
 from typing import List, Any, Dict, Optional
-from PIL import Image, ExifTags, UnidentifiedImageError
+from PIL import Image, ImageFile, ExifTags, UnidentifiedImageError
 from natsort import natsorted
 from gooey import Gooey, GooeyParser
 
 import codecs
 
-
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
 utf8_stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 utf8_stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 if sys.stdout.encoding != "UTF-8":
     sys.stdout = utf8_stdout  # type: ignore
 if sys.stderr.encoding != "UTF-8":
     sys.stderr = utf8_stderr  # type: ignore
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -63,12 +67,15 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
         str(f) for f in image_path.rglob("*") if f.is_file()
     ]
     files: List[Path] = [Path(file) for file in natsorted(files_str)]
+    load_errs: List[str] = []
 
     for file in files:
         try:
             im: Any = Image.open(file)
         except UnidentifiedImageError:
-            print(f"Failed to open {file} as an image.", flush=True)
+            msg = f"Failed to open {file} as an image."
+            print(msg, flush=True)
+            load_errs.append(msg)
         except Exception as e:
             raise ImageConvertError(e)
         else:
@@ -116,6 +123,9 @@ def images2pdf(image_path: Path, out_file: Path) -> None:
         )
     except Exception as e:
         raise ImageConvertError(e)
+
+    for err in load_errs:
+        print(f"WARNING! {err}", flush=True)
 
 
 # -----------------------------------------------------------------------------
