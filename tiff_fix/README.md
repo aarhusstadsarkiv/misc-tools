@@ -1,0 +1,2 @@
+TIFF fix bruger IrfanViews CLI til at åbne og gemme TIFF filer, der eventuelt har problemer med Fax Group 4 encoding.
+Den tager en .txt fil med en liste over absolutte stier til de relevante TIFF filer som input.
