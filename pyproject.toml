@@ -21,7 +21,6 @@ mypy = "^0.812"
 
 [tool.black]
 line-length = 79
-exclude = ".venv"
 
 [build-system]
 requires = ["poetry>=0.12"]
