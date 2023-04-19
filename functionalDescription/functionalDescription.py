@@ -22,10 +22,8 @@ for column in root.findall('.//{*}column'):
     if column.find('{*}name') is not None:
         name = column.find('{*}name')
     for cond in conditions:
-        #print(cond)
         if (name.text == cond["name"] and not column.findall("{*}functionalDescription")):
             new_tag = ET.SubElement(column, "functionalDescription")
-            #print(ET.tostring(new_tag.text, encoding='UTF-8', method="xml").decode('UTF-8'))
             new_tag.text = cond["functionalDescription"]
 
     # Save the modified XML file
